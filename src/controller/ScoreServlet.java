@@ -10,6 +10,7 @@ import dao.ScoreDAO;
 import dao.QuestionDAO;
 import model.Score;
 import model.Question;
+import model.User;
 
 @WebServlet("/score")
 public class ScoreServlet extends HttpServlet {
@@ -19,13 +20,19 @@ public class ScoreServlet extends HttpServlet {
             throws ServletException, IOException {
 
         List<Question> questions = (List<Question>) request.getSession().getAttribute("questions");
+        User currentUser = (User) request.getSession().getAttribute("user");
+        if (currentUser == null) {
+            response.sendRedirect("login.jsp");
+            return;
+        }
+
         if (questions == null || questions.isEmpty()) {
             String selectedLevel = request.getParameter("level");
             questions = new QuestionDAO().getQuestionsByLevel(selectedLevel);
         }
 
         if (questions == null || questions.isEmpty()) {
-            response.sendRedirect("index.html");
+            response.sendRedirect("dashboard.jsp");
             return;
         }
 
@@ -41,7 +48,7 @@ public class ScoreServlet extends HttpServlet {
         }
 
         Score s = new Score();
-        s.setUsername("User");
+        s.setUsername(currentUser.getUsername());
         s.setScore(score);
 
         ScoreDAO dao = new ScoreDAO();
@@ -50,6 +57,7 @@ public class ScoreServlet extends HttpServlet {
         request.setAttribute("score", score);
         request.setAttribute("totalQuestions", questions.size());
         request.setAttribute("scoreSaved", scoreSaved);
+        request.setAttribute("username", currentUser.getUsername());
         request.getSession().removeAttribute("questions");
 
         RequestDispatcher rd = request.getRequestDispatcher("result.jsp");
